@@ -4,6 +4,8 @@ pet project on stepfpga max10 device
 ## STEPFPGA_I2C_SEC
 ### Description
 first test project
+* count seconds and show it on 7-segments led
+* switch set value for RGB led
 
 <br><br><br>
 # Editing this README
