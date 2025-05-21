@@ -4,7 +4,7 @@ pet project on stepfpga max10 device
 [Board description](./docs/boardDescription.md)
 
 
-## STEPFPGA_I2C_SEC
+## [STEPFPGA_I2C_SEC](./STEPFPGA_I2C_SEC/)
 ### Description
 first test project
 * count seconds and show it on 7-segments led
