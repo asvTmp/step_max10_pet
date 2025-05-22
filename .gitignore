@@ -57,6 +57,7 @@
 *example*
 *sopc_*
 # *.sdc # I want those timing files
+*.cdf
 
 # ignore Quartus II generated folders
 */db/

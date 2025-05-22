@@ -1,8 +1,11 @@
 # step_max10_pet
 pet project on stepfpga max10 device
 
-[Board description](./docs/boardDescription.md)
-
+## Docs  
+[Board description](./docs/boardDescription.md)  
+[Hardware manual](./docs/STEP-MAX10%20Hardware%20Manual%201.0.pdf)  
+[Schematic](./docs/STEP-MAX10%20Schematic.pdf)  
+[Software manual](./docs/STEP-MAX10%20Software%20Manual%201.0.pdf)  
 
 ## [STEPFPGA_I2C_SEC](./STEPFPGA_I2C_SEC/)
 ### Description
