@@ -114,4 +114,12 @@ set_global_assignment -name SYSTEMVERILOG_FILE src/seve_seg_decoder.sv
 set_global_assignment -name SYSTEMVERILOG_FILE src/pulses_gen.sv
 set_global_assignment -name SYSTEMVERILOG_FILE src/top_i2c_sec.sv
 set_global_assignment -name QIP_FILE ip_core/alt_pll_stepfpga.qip
+set_location_assignment PIN_L7 -to GPIO4
+set_location_assignment PIN_R5 -to GPIO5
+set_location_assignment PIN_P6 -to GPIO6
+set_location_assignment PIN_R7 -to GPIO7
+set_location_assignment PIN_P7 -to GPIO8
+set_location_assignment PIN_P8 -to GPIO9
+set_location_assignment PIN_D10 -to GPIO20
+set_location_assignment PIN_B8 -to GPIO21
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

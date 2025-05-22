@@ -33,6 +33,15 @@ module top_i2c_sec (
     output wire SEG_DP2,
     output wire SEG_DIG2,
 
+    output wire GPIO4,
+    output wire GPIO5,
+    output wire GPIO6,
+    output wire GPIO7,
+    output wire GPIO8,
+    output wire GPIO9,
+    output wire GPIO20,
+    output wire GPIO21,
+
     output wire [8:1] LED 
 ); 
 
@@ -69,6 +78,19 @@ module top_i2c_sec (
     logic hex_on;
     logic sel_rgb;
     logic [2:0] rgb_key;
+
+    logic PMOD_DTx2_A;
+    logic PMOD_DTx2_B;
+    logic PMOD_DTx2_C;
+    logic PMOD_DTx2_D;
+    logic PMOD_DTx2_E;
+    logic PMOD_DTx2_F;
+    logic PMOD_DTx2_G;
+    logic PMOD_DTx2_SEL;
+
+    logic [31:0] c_counter;
+    logic p_sel;
+    logic PMOD_DTx2_INV;
 
     assign rst_n = KEY_BUTTON[1];
     assign hex_on = ~KEY_BUTTON[2];
@@ -111,6 +133,16 @@ module top_i2c_sec (
     assign rgb_cnt_1 = (sel_rgb) ? rgb_key : sec_hex[2:0];
 
     assign LED[8:1] = ~snake_reg[7:0];
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            c_counter <= 0;
+        end else begin
+            c_counter <= c_counter + 1;
+        end
+    end
+
+    assign p_sel = c_counter[{DIP_SW,2'b00}];
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -171,5 +203,24 @@ module top_i2c_sec (
         SEG_DP2     = seg_2_dp;
         SEG_DIG2    = seg_2_dig;
     end
+
+    assign PMOD_DTx2_A      = (p_sel) ? seg_out_2[6] : seg_out_1[6];
+    assign PMOD_DTx2_B      = (p_sel) ? seg_out_2[5] : seg_out_1[5];
+    assign PMOD_DTx2_C      = (p_sel) ? seg_out_2[4] : seg_out_1[4];
+    assign PMOD_DTx2_D      = (p_sel) ? seg_out_2[3] : seg_out_1[3];
+    assign PMOD_DTx2_E      = (p_sel) ? seg_out_2[2] : seg_out_1[2];
+    assign PMOD_DTx2_F      = (p_sel) ? seg_out_2[1] : seg_out_1[1];
+    assign PMOD_DTx2_G      = (p_sel) ? seg_out_2[0] : seg_out_1[0];
+    assign PMOD_DTx2_SEL    = p_sel;
+    assign PMOD_DTx2_INV = 1'b1;
+
+    assign GPIO4    = (PMOD_DTx2_INV) ? ~PMOD_DTx2_C : PMOD_DTx2_C   ;
+    assign GPIO5    = (PMOD_DTx2_INV) ? ~PMOD_DTx2_B : PMOD_DTx2_B   ;
+    assign GPIO6    = (PMOD_DTx2_INV) ? ~PMOD_DTx2_D : PMOD_DTx2_D   ;
+    assign GPIO7    = (PMOD_DTx2_INV) ? ~PMOD_DTx2_E : PMOD_DTx2_E   ;
+    assign GPIO8    = (PMOD_DTx2_INV) ? ~PMOD_DTx2_G : PMOD_DTx2_G   ;
+    assign GPIO9    = (PMOD_DTx2_INV) ? ~PMOD_DTx2_F : PMOD_DTx2_F   ;
+    assign GPIO20   = (PMOD_DTx2_INV) ? ~PMOD_DTx2_A : PMOD_DTx2_A   ;
+    assign GPIO21   = PMOD_DTx2_SEL ;
 
 endmodule
