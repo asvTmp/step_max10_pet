@@ -46,6 +46,7 @@ module top_i2c_sec (
 ); 
 
     localparam CLK_IN_FREQ = 12_000_000;
+    localparam CLK_FREQ = 84_000_000;
 
     logic [7:0]leds;
     logic rst_n;
@@ -68,6 +69,7 @@ module top_i2c_sec (
     logic seg_2_dp;
     logic seg_1_dig;
     logic seg_2_dig;
+    logic [6:0] seg_out;
 
     logic [3:0] hundreds;
     logic [3:0] tens;
@@ -79,6 +81,9 @@ module top_i2c_sec (
     logic sel_rgb;
     logic [2:0] rgb_key;
 
+    logic [31:0] c_counter;
+    logic p_sel;
+
     logic PMOD_DTx2_A;
     logic PMOD_DTx2_B;
     logic PMOD_DTx2_C;
@@ -86,11 +91,6 @@ module top_i2c_sec (
     logic PMOD_DTx2_E;
     logic PMOD_DTx2_F;
     logic PMOD_DTx2_G;
-    logic PMOD_DTx2_SEL;
-
-    logic [31:0] c_counter;
-    logic p_sel;
-    logic PMOD_DTx2_INV;
 
     assign rst_n = KEY_BUTTON[1];
     assign hex_on = ~KEY_BUTTON[2];
@@ -107,7 +107,7 @@ module top_i2c_sec (
 	);
 
     pulses_gen #(
-        .CLK_IN_HZ(84_000_000),
+        .CLK_IN_HZ(CLK_FREQ),
         .PULSE_1_CLK(1_000_000),
         .PULSE_1_CNT(1000),
         .PULSE_2_CNT(1000)
@@ -141,8 +141,6 @@ module top_i2c_sec (
             c_counter <= c_counter + 1;
         end
     end
-
-    assign p_sel = c_counter[{DIP_SW,2'b00}];
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -204,23 +202,34 @@ module top_i2c_sec (
         SEG_DIG2    = seg_2_dig;
     end
 
-    assign PMOD_DTx2_A      = (p_sel) ? seg_out_2[6] : seg_out_1[6];
-    assign PMOD_DTx2_B      = (p_sel) ? seg_out_2[5] : seg_out_1[5];
-    assign PMOD_DTx2_C      = (p_sel) ? seg_out_2[4] : seg_out_1[4];
-    assign PMOD_DTx2_D      = (p_sel) ? seg_out_2[3] : seg_out_1[3];
-    assign PMOD_DTx2_E      = (p_sel) ? seg_out_2[2] : seg_out_1[2];
-    assign PMOD_DTx2_F      = (p_sel) ? seg_out_2[1] : seg_out_1[1];
-    assign PMOD_DTx2_G      = (p_sel) ? seg_out_2[0] : seg_out_1[0];
-    assign PMOD_DTx2_SEL    = p_sel;
-    assign PMOD_DTx2_INV = 1'b1;
+    pmod_dtx2 #(
+        .CLK_IN(CLK_FREQ),
+        .PSEL_FREQ(1_000),
+        .COMMON_ANODE(1'b1)
+    ) inst_pmod(
+        .clk(clk),
+        .rst_n(rst_n),
+        .seg_1_in(seg_out_1),
+        .seg_2_in(seg_out_2),
+        .seg_out(seg_out),
+        .seg_sel(p_sel) 
+    );
 
-    assign GPIO4    = (PMOD_DTx2_INV) ? ~PMOD_DTx2_C : PMOD_DTx2_C   ;
-    assign GPIO5    = (PMOD_DTx2_INV) ? ~PMOD_DTx2_B : PMOD_DTx2_B   ;
-    assign GPIO6    = (PMOD_DTx2_INV) ? ~PMOD_DTx2_D : PMOD_DTx2_D   ;
-    assign GPIO7    = (PMOD_DTx2_INV) ? ~PMOD_DTx2_E : PMOD_DTx2_E   ;
-    assign GPIO8    = (PMOD_DTx2_INV) ? ~PMOD_DTx2_G : PMOD_DTx2_G   ;
-    assign GPIO9    = (PMOD_DTx2_INV) ? ~PMOD_DTx2_F : PMOD_DTx2_F   ;
-    assign GPIO20   = (PMOD_DTx2_INV) ? ~PMOD_DTx2_A : PMOD_DTx2_A   ;
-    assign GPIO21   = PMOD_DTx2_SEL ;
+    assign PMOD_DTx2_A      = seg_out[6];
+    assign PMOD_DTx2_B      = seg_out[5];
+    assign PMOD_DTx2_C      = seg_out[4];
+    assign PMOD_DTx2_D      = seg_out[3];
+    assign PMOD_DTx2_E      = seg_out[2];
+    assign PMOD_DTx2_F      = seg_out[1];
+    assign PMOD_DTx2_G      = seg_out[0];
+
+    assign GPIO4    = PMOD_DTx2_C;
+    assign GPIO5    = PMOD_DTx2_B;
+    assign GPIO6    = PMOD_DTx2_D;
+    assign GPIO7    = PMOD_DTx2_E;
+    assign GPIO8    = PMOD_DTx2_G;
+    assign GPIO9    = PMOD_DTx2_F;
+    assign GPIO20   = PMOD_DTx2_A;
+    assign GPIO21   = p_sel;
 
 endmodule
