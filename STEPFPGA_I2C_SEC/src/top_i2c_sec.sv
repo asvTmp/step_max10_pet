@@ -55,6 +55,7 @@ module top_i2c_sec (
     logic lock;
     logic pulse_1us;
     logic pulse_1ms;
+    logic pulse_10ms;
     logic pulse_1s;
     logic [7:0] sec_count;
     logic [1:0] min_count;
@@ -63,13 +64,25 @@ module top_i2c_sec (
     logic [2:0] rgb_cnt_1;
     logic [2:0] rgb_cnt_2;
 
+    logic [9:0] ms_count;
+    logic [9:0] tms_count;
+
     logic [6:0] seg_out_1;
     logic [6:0] seg_out_2;
+    logic [6:0] mseg_out_1;
+    logic [6:0] mseg_out_2;
     logic seg_1_dp;
     logic seg_2_dp;
     logic seg_1_dig;
     logic seg_2_dig;
     logic [6:0] seg_out;
+
+    logic [3:0] thundreds;
+    logic [3:0] ttens;
+    logic [3:0] tones;
+    logic [7:0] msec_hex;
+    logic [7:0] msec_bcd;
+    logic [7:0] mseg_value;
 
     logic [3:0] hundreds;
     logic [3:0] tens;
@@ -92,8 +105,18 @@ module top_i2c_sec (
     logic PMOD_DTx2_F;
     logic PMOD_DTx2_G;
 
+    logic lock_btn;
+    logic pause_btn;
+
+    logic [6:0] seg_out_1_r;
+    logic [6:0] seg_out_2_r;
+    logic [6:0] mseg_out_1_r;
+    logic [6:0] mseg_out_2_r;
+
     assign rst_n = KEY_BUTTON[1];
     assign hex_on = ~KEY_BUTTON[2];
+    assign lock_btn = KEY_BUTTON[3];
+    assign pause_btn = KEY_BUTTON[4];
 
     assign sel_rgb = DIP_SW[1];
     assign rgb_key = DIP_SW[4:2];
@@ -119,6 +142,14 @@ module top_i2c_sec (
         .pulse_3(pulse_1s) 
     );
 
+    assign msec_hex = tms_count;
+    assign {thundreds, ttens, tones} = hex8_to_bcd_opt(msec_hex);
+    assign msec_bcd = {ttens, tones};
+    assign mseg_value = (hex_on) ? msec_hex : msec_bcd;
+
+    assign mseg_out_1 = seven_seg_decode(mseg_value[7:4], 1'b0);
+    assign mseg_out_2 = seven_seg_decode(mseg_value[3:0], 1'b0);
+
     assign sec_hex = sec_count;
     assign {hundreds, tens, ones} = hex8_to_bcd_opt(sec_hex);
     assign sec_bcd = {tens, ones};
@@ -127,7 +158,10 @@ module top_i2c_sec (
     assign seg_out_1 = seven_seg_decode(seg_value[7:4], 1'b0);
     assign seg_out_2 = seven_seg_decode(seg_value[3:0], 1'b0);
 
-    assign {seg_1_dp, seg_2_dp} = min_count[1:0];
+    // assign {seg_1_dp, seg_2_dp} = min_count[1:0];
+    // assign {seg_1_dp, seg_2_dp} = sec_hex[1:0];
+    assign seg_1_dp = sec_hex[0];
+    assign seg_2_dp = ~sec_hex[0];
 
     assign rgb_cnt_2 = (sel_rgb) ? rgb_key : sec_hex[5:3];
     assign rgb_cnt_1 = (sel_rgb) ? rgb_key : sec_hex[2:0];
@@ -142,28 +176,45 @@ module top_i2c_sec (
         end
     end
 
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            snake_reg <= 8'h1;
-        end else begin
-            if (pulse_1s) begin
-                snake_reg[7:0] <= {snake_reg[6:0], snake_reg[7]};
-            end
-        end
-    end
+    // always @(posedge clk or negedge rst_n) begin
+    //     if (!rst_n) begin
+    //     end else begin
+    //         if (pulse_1s) begin
+    //         end
+    //     end
+    // end
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             sec_count <= 'h0;
+            ms_count <= 'd0;
             min_count <= 0;
+            pulse_10ms <= 1'b0;
+            snake_reg <= 8'h1;
         end else begin
-            if (pulse_1s) begin
-                // sec_count <= (sec_count==59) ? 0 : sec_count + 1;
-                if (sec_count == 'd59) begin
-                    sec_count <= 0;
-                    min_count <= min_count + 1;
+            if (pulse_1ms & pause_btn) begin
+                if (ms_count == 9) begin
+                    ms_count <= 0;
+                    pulse_10ms <= 1'b1;
                 end else begin
-                    sec_count <= sec_count + 1;
+                    ms_count <= ms_count + 1;
+                    pulse_10ms <= 1'b0;
+                end
+            end else begin
+                pulse_10ms <= 1'b0;
+            end
+            if (pulse_10ms) begin
+                if (tms_count == 'd99) begin
+                    tms_count <= 'd0;
+                    if (sec_count == 'd59) begin
+                        sec_count <= 0;
+                        min_count <= min_count + 1;
+                    end else begin
+                        sec_count <= sec_count + 1;
+                    end
+                    snake_reg[7:0] <= {snake_reg[6:0], snake_reg[7]};
+                end else begin
+                    tms_count <= tms_count + 1;
                 end
             end
         end
@@ -180,24 +231,41 @@ module top_i2c_sec (
     assign seg_1_dig = 1'b0;
     assign seg_2_dig = 1'b0;
 
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            mseg_out_1_r <= 0;
+            mseg_out_2_r <= 0;
+            seg_out_1_r <= 0;
+            seg_out_2_r <= 0;
+        end else begin
+            if (lock_btn) begin
+                mseg_out_1_r <= mseg_out_1;
+                mseg_out_2_r <= mseg_out_2;
+                seg_out_1_r <= seg_out_1;
+                seg_out_2_r <= seg_out_2;
+            end
+        end
+    end
+
+
     always_comb begin
-        SEG_A1      = seg_out_1[6];
-        SEG_B1      = seg_out_1[5];
-        SEG_C1      = seg_out_1[4];
-        SEG_D1      = seg_out_1[3];
-        SEG_E1      = seg_out_1[2];
-        SEG_F1      = seg_out_1[1];
-        SEG_G1      = seg_out_1[0];
+        SEG_A1      = mseg_out_1_r[6];
+        SEG_B1      = mseg_out_1_r[5];
+        SEG_C1      = mseg_out_1_r[4];
+        SEG_D1      = mseg_out_1_r[3];
+        SEG_E1      = mseg_out_1_r[2];
+        SEG_F1      = mseg_out_1_r[1];
+        SEG_G1      = mseg_out_1_r[0];
         SEG_DP1     = seg_1_dp;
         SEG_DIG1    = seg_1_dig;
 
-        SEG_A2      = seg_out_2[6];
-        SEG_B2      = seg_out_2[5];
-        SEG_C2      = seg_out_2[4];
-        SEG_D2      = seg_out_2[3];
-        SEG_E2      = seg_out_2[2];
-        SEG_F2      = seg_out_2[1];
-        SEG_G2      = seg_out_2[0];
+        SEG_A2      = mseg_out_2_r[6];
+        SEG_B2      = mseg_out_2_r[5];
+        SEG_C2      = mseg_out_2_r[4];
+        SEG_D2      = mseg_out_2_r[3];
+        SEG_E2      = mseg_out_2_r[2];
+        SEG_F2      = mseg_out_2_r[1];
+        SEG_G2      = mseg_out_2_r[0];
         SEG_DP2     = seg_2_dp;
         SEG_DIG2    = seg_2_dig;
     end
@@ -209,8 +277,8 @@ module top_i2c_sec (
     ) inst_pmod(
         .clk(clk),
         .rst_n(rst_n),
-        .seg_1_in(seg_out_1),
-        .seg_2_in(seg_out_2),
+        .seg_1_in(seg_out_1_r),
+        .seg_2_in(seg_out_2_r),
         .seg_out(seg_out),
         .seg_sel(p_sel) 
     );
