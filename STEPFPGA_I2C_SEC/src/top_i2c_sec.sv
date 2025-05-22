@@ -42,6 +42,9 @@ module top_i2c_sec (
     output wire GPIO20,
     output wire GPIO21,
 
+    input  wire GPIO28,
+    output wire GPIO29,
+
     output wire [8:1] LED 
 ); 
 
@@ -112,6 +115,17 @@ module top_i2c_sec (
     logic [6:0] seg_out_2_r;
     logic [6:0] mseg_out_1_r;
     logic [6:0] mseg_out_2_r;
+
+    logic uart_tx;
+    logic uart_rx;
+
+    logic [7:0] tx_data;
+    logic tx_send;
+    logic tx_busy;
+
+
+    assign uart_rx = GPIO28;
+    assign GPIO29 = uart_tx;
 
     assign rst_n = KEY_BUTTON[1];
     assign hex_on = ~KEY_BUTTON[2];
@@ -299,5 +313,37 @@ module top_i2c_sec (
     assign GPIO9    = PMOD_DTx2_F;
     assign GPIO20   = PMOD_DTx2_A;
     assign GPIO21   = p_sel;
+
+    uart_tx #(
+        .CLK_FREQ(CLK_FREQ),
+        .BAUD_RATE(9600)
+    ) inst_uart_tx (
+        .clk(clk),
+        .rst_n(rst_n),
+        .data(tx_data),
+        .start(tx_send),
+        .tx(uart_tx),
+        .busy(tx_busy)
+    );
+
+    //hex_on
+    logic pres_a;
+    logic pres_b;
+    logic pres_pe;
+
+    assign pres_pe = pres_a & ~pres_b;
+
+    assign tx_data = sec_hex;
+    assign tx_send = pres_pe;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            pres_a <= 1'b0;
+            pres_b <= 1'b0;
+        end else begin
+            pres_a <= KEY_BUTTON[2];
+            pres_b <= pres_a;
+        end
+    end
 
 endmodule
