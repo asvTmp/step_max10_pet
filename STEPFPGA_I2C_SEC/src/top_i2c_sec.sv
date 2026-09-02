@@ -45,6 +45,9 @@ module top_i2c_sec (
     input  wire GPIO28,
     output wire GPIO29,
 
+    input  wire SCL,
+    inout  wire SDA,
+
     output wire [8:1] LED 
 ); 
 
@@ -263,23 +266,23 @@ module top_i2c_sec (
 
 
     always_comb begin
-        SEG_A1      = mseg_out_1_r[6];
-        SEG_B1      = mseg_out_1_r[5];
-        SEG_C1      = mseg_out_1_r[4];
-        SEG_D1      = mseg_out_1_r[3];
-        SEG_E1      = mseg_out_1_r[2];
-        SEG_F1      = mseg_out_1_r[1];
-        SEG_G1      = mseg_out_1_r[0];
+        SEG_A1      = seg_out_1_r[6];
+        SEG_B1      = seg_out_1_r[5];
+        SEG_C1      = seg_out_1_r[4];
+        SEG_D1      = seg_out_1_r[3];
+        SEG_E1      = seg_out_1_r[2];
+        SEG_F1      = seg_out_1_r[1];
+        SEG_G1      = seg_out_1_r[0];
         SEG_DP1     = seg_1_dp;
         SEG_DIG1    = seg_1_dig;
 
-        SEG_A2      = mseg_out_2_r[6];
-        SEG_B2      = mseg_out_2_r[5];
-        SEG_C2      = mseg_out_2_r[4];
-        SEG_D2      = mseg_out_2_r[3];
-        SEG_E2      = mseg_out_2_r[2];
-        SEG_F2      = mseg_out_2_r[1];
-        SEG_G2      = mseg_out_2_r[0];
+        SEG_A2      = seg_out_2_r[6];
+        SEG_B2      = seg_out_2_r[5];
+        SEG_C2      = seg_out_2_r[4];
+        SEG_D2      = seg_out_2_r[3];
+        SEG_E2      = seg_out_2_r[2];
+        SEG_F2      = seg_out_2_r[1];
+        SEG_G2      = seg_out_2_r[0];
         SEG_DP2     = seg_2_dp;
         SEG_DIG2    = seg_2_dig;
     end
@@ -291,8 +294,8 @@ module top_i2c_sec (
     ) inst_pmod(
         .clk(clk),
         .rst_n(rst_n),
-        .seg_1_in(seg_out_1_r),
-        .seg_2_in(seg_out_2_r),
+        .seg_1_in(mseg_out_1_r),
+        .seg_2_in(mseg_out_2_r),
         .seg_out(seg_out),
         .seg_sel(p_sel) 
     );
@@ -345,5 +348,46 @@ module top_i2c_sec (
             pres_b <= pres_a;
         end
     end
+
+    logic [7:0]      gpi_w [0:15];
+    logic [7:0]      gpo_w [0:15];
+
+    always_comb begin
+        gpi_w[ 0] = 8'hb0;
+        gpi_w[ 1] = 8'hba;
+        gpi_w[ 2] = 8'heb;
+        gpi_w[ 3] = 8'hca;
+        gpi_w[ 4] = 8'h00;
+        gpi_w[ 5] = 8'h00;
+        gpi_w[ 6] = 8'h00;
+        gpi_w[ 7] = 8'h00;
+        gpi_w[ 8] = {1'b0, mseg_out_1};
+        gpi_w[ 9] = {1'b0, mseg_out_2};
+        gpi_w[10] = {1'b0,  seg_out_1};
+        gpi_w[11] = {1'b0,  seg_out_2};
+        gpi_w[12] = {1'b0, mseg_out_1_r};
+        gpi_w[13] = {1'b0, mseg_out_2_r};
+        gpi_w[14] = {1'b0,  seg_out_1_r};
+        gpi_w[15] = {1'b0,  seg_out_2_r};
+    end
+
+    wire clk_w;
+    wire locked_w;
+    wire oSmbAlert_n;
+
+    assign clk_w = clk;
+    assign locked_w = rst_n;
+
+    pca_i2c_gpio #(
+        .DEVICE_ADDR(7'h55) 
+    ) U_55_I2C (
+        .iClk           (clk_w),
+        .iRst_n         (locked_w),
+        .iSCL           (SCL),
+        .ioSDA          (SDA),
+        .gpi_w          (gpi_w),
+        .gpo_w          (gpo_w),
+        .oSmbAlert_n    (oSmbAlert_n) 
+    );    
 
 endmodule
