@@ -357,10 +357,10 @@ module top_i2c_sec (
         gpi_w[ 1] = 8'hba;
         gpi_w[ 2] = 8'heb;
         gpi_w[ 3] = 8'hca;
-        gpi_w[ 4] = 8'h00;
-        gpi_w[ 5] = 8'h00;
-        gpi_w[ 6] = 8'h00;
-        gpi_w[ 7] = 8'h00;
+        gpi_w[ 4] = msec_hex;
+        gpi_w[ 5] = sec_hex;
+        gpi_w[ 6] = msec_bcd;
+        gpi_w[ 7] = sec_bcd;
         gpi_w[ 8] = {1'b0, mseg_out_1};
         gpi_w[ 9] = {1'b0, mseg_out_2};
         gpi_w[10] = {1'b0,  seg_out_1};
