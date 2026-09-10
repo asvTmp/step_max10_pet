@@ -42,6 +42,9 @@ module top_i2c_sec (
     output wire GPIO20,
     output wire GPIO21,
 
+    output wire GPIO0,
+    output wire GPIO1,
+
     input  wire GPIO28,
     output wire GPIO29,
 
@@ -57,6 +60,8 @@ module top_i2c_sec (
     logic [7:0]leds;
     logic rst_n;
     logic clk;
+    logic clk_x14;
+    logic clk_x21;
     logic [3:0] dips_in;
     logic lock;
     logic pulse_1us;
@@ -143,8 +148,13 @@ module top_i2c_sec (
     alt_pll_stepfpga	alt_pll_stepfpga_inst (
 	    .inclk0     ( clk_12MHZ ),
 	    .c0         ( clk ),
+        .c1         ( clk_x14 ),
+        .c2         ( clk_x21 ),
 	    .locked     ( lock )
 	);
+
+    assign GPIO0 = clk_x14;
+    assign GPIO1 = clk_x21;
 
     pulses_gen #(
         .CLK_IN_HZ(CLK_FREQ),
@@ -264,25 +274,24 @@ module top_i2c_sec (
         end
     end
 
-
     always_comb begin
-        SEG_A1      = seg_out_1_r[6];
-        SEG_B1      = seg_out_1_r[5];
-        SEG_C1      = seg_out_1_r[4];
-        SEG_D1      = seg_out_1_r[3];
-        SEG_E1      = seg_out_1_r[2];
-        SEG_F1      = seg_out_1_r[1];
-        SEG_G1      = seg_out_1_r[0];
+        SEG_A1      = mseg_out_1_r[6];
+        SEG_B1      = mseg_out_1_r[5];
+        SEG_C1      = mseg_out_1_r[4];
+        SEG_D1      = mseg_out_1_r[3];
+        SEG_E1      = mseg_out_1_r[2];
+        SEG_F1      = mseg_out_1_r[1];
+        SEG_G1      = mseg_out_1_r[0];
         SEG_DP1     = seg_1_dp;
         SEG_DIG1    = seg_1_dig;
 
-        SEG_A2      = seg_out_2_r[6];
-        SEG_B2      = seg_out_2_r[5];
-        SEG_C2      = seg_out_2_r[4];
-        SEG_D2      = seg_out_2_r[3];
-        SEG_E2      = seg_out_2_r[2];
-        SEG_F2      = seg_out_2_r[1];
-        SEG_G2      = seg_out_2_r[0];
+        SEG_A2      = mseg_out_2_r[6];
+        SEG_B2      = mseg_out_2_r[5];
+        SEG_C2      = mseg_out_2_r[4];
+        SEG_D2      = mseg_out_2_r[3];
+        SEG_E2      = mseg_out_2_r[2];
+        SEG_F2      = mseg_out_2_r[1];
+        SEG_G2      = mseg_out_2_r[0];
         SEG_DP2     = seg_2_dp;
         SEG_DIG2    = seg_2_dig;
     end
@@ -294,8 +303,8 @@ module top_i2c_sec (
     ) inst_pmod(
         .clk(clk),
         .rst_n(rst_n),
-        .seg_1_in(mseg_out_1_r),
-        .seg_2_in(mseg_out_2_r),
+        .seg_1_in(seg_out_1_r),
+        .seg_2_in(seg_out_2_r),
         .seg_out(seg_out),
         .seg_sel(p_sel) 
     );

@@ -131,4 +131,8 @@ set_global_assignment -name QIP_FILE ip_core/alt_pll_stepfpga.qip
 set_global_assignment -name SYSTEMVERILOG_FILE src/pmod_dtx2.sv
 set_location_assignment PIN_M4 -to SCL
 set_location_assignment PIN_P3 -to SDA
+set_location_assignment PIN_R3 -to GPIO1
+set_location_assignment PIN_M5 -to GPIO0
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "252 MHz" -to GPIO1
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "252 MHz" -to GPIO0
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
